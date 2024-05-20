@@ -78,6 +78,17 @@ function pull(args) {
   return [query, options, callback]
 }
 
+// Support alternative query
+function parseQuery(obj, array = true) {
+  if (obj && typeof obj == 'string') {
+    return { id: obj }
+  }
+  if (array && _.isArray(obj)) {
+    return { id: { $in: obj } }
+  }
+  return obj
+}
+
 module.exports = async function (config = {}) {
   config = _.merge({}, DEFAULT_CONFIG, config)
   if (config.timestamps === true) {
@@ -104,6 +115,7 @@ module.exports = async function (config = {}) {
 
     // Finds data all in one go
     async function find(query = {}, options = {}) {
+      query = parseQuery(query)
       if (config.simpleid) flipid(query)
       parseOptions(options)
       const result = await getCursor(query, options).toArray()
@@ -219,6 +231,7 @@ module.exports = async function (config = {}) {
 
     // Find only one
     async function get(query = {}, options = {}) {
+      query = parseQuery(query, false)
       if (config.simpleid) flipid(query)
       parseOptions(options)
       options.limit = 1
@@ -230,6 +243,7 @@ module.exports = async function (config = {}) {
 
     // Count
     async function count(query = {}, options = {}) {
+      query = parseQuery(query)
       if (config.simpleid) flipid(query)
       parseOptions(options)
       return await collection.countDocuments(query, options)
@@ -262,6 +276,7 @@ module.exports = async function (config = {}) {
 
     // Update
     async function update(query = {}, values = {}, options = {}) {
+      query = parseQuery(query)
       if (config.simpleid) flipid(query)
 
       const operation = {}
@@ -293,6 +308,7 @@ module.exports = async function (config = {}) {
 
     // Delete
     async function del(query = {}, options = {}) {
+      query = parseQuery(query)
       if (config.simpleid) flipid(query)
       const result = await collection.deleteMany(query, options)
       return { n: result.deletedCount }
